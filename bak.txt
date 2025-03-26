@@ -1,0 +1,113 @@
+import express, { Request, Response } from "express";
+import { ethers } from "ethers";
+import db from "../db";
+import multer from "multer";
+import AWS from "aws-sdk";
+
+const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage() });
+
+// AWS S3 配置
+const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
+});
+
+// 初始化数据库
+const initDatabase = () => {
+    const createTableSQL = `
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            address TEXT NOT NULL UNIQUE,
+            username TEXT,
+            avatar_url TEXT,
+            updated_at DATETIME
+        )
+    `;
+    db.exec(createTableSQL, (err) => {
+        if (err) {
+            console.error("创建表失败:", err);
+        } else {
+            console.log("表已创建或已存在");
+        }
+    });
+};
+
+initDatabase();
+
+// 注册路由
+router.post("/register", async (req: Request, res: Response): Promise<void> => {
+    const { address, message, signature } = req.body;
+
+    if (!address || !message || !signature) {
+        res.status(400).json({ message: "缺少必要参数" });
+        return;
+    }
+
+    try {
+        // 使用 ethers 验证签名
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+
+        if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+            res.status(401).json({ message: "签名验证失败" });
+            return;
+        }
+
+        // 存入数据库
+        const stmt = db.prepare("INSERT OR IGNORE INTO users (address) VALUES (?)");
+        stmt.run(address);
+
+        res.json({ message: "注册成功" });
+    } catch (error) {
+        console.error("验证失败:", error);
+        res.status(500).json({ message: "服务器错误" });
+    }
+});
+
+// 更新用户信息路由
+import { RequestHandler } from "express";
+
+router.post("/updateProfile", upload.single("avatar"), (async (req: Request, res: Response) => {
+    const { address, username, message, signature } = req.body;
+    const avatarFile = req.file;
+
+    if (!address || !username || !avatarFile || !message || !signature) {
+        res.status(400).json({ message: "缺少必要参数" });
+        return;
+    }
+
+    try {
+        // 验证签名
+        const recoveredAddress = ethers.verifyMessage(message, signature);
+
+        if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+            res.status(401).json({ message: "签名验证失败" });
+            return;
+        }
+
+        // 上传头像到 S3
+        const params = {
+            Bucket: process.env.AWS_S3_BUCKET_NAME!,
+            Key: `avatars/${address}-${Date.now()}`,
+            Body: avatarFile.buffer,
+            ContentType: avatarFile.mimetype,
+        };
+        const s3Response = await s3.upload(params).promise();
+
+        // 更新数据库
+        const stmt = db.prepare(`
+            UPDATE users
+            SET username = ?, avatar_url = ?, updated_at = ?
+            WHERE address = ?
+        `);
+        stmt.run(username, s3Response.Location, new Date().toISOString(), address);
+
+        res.json({ message: "个人信息更新成功" });
+    } catch (error) {
+        console.error("更新失败:", error);
+        res.status(500).json({ message: "服务器错误" });
+    }
+}) as RequestHandler);
+
+export default router;
