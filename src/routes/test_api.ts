@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.post("/proxy", async (req, res) => {
     try {
-        const { content, headers, endpoint, model, conversationId, sender, originalText, userLanguage, providerAddress } = req.body;
+        const { content, headers, endpoint, model, conversationId, sender, originalText, userLanguage } = req.body;
         console.log("POST /proxy");
 
         // 3. 调用翻译API
@@ -28,6 +28,7 @@ router.post("/proxy", async (req, res) => {
         });
 
 
+
         // 4. 存储翻译结果
         const translationResult = await apiResponse.json();
 
@@ -36,13 +37,11 @@ router.post("/proxy", async (req, res) => {
 
         console.log("translationResult: ", translationResult);
         const translatedText = translationResult.choices?.[0]?.message?.content || "";
-        console.log("translatedText: ", translatedText);
+        const chatID = translationResult.id;
 
-        // const response = await fetch('http://8.210.39.6:3080/v1/proxy/settle-fee', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ providerAddress, content })
-        // });
+
+        console.log("translatedText: ", translatedText);
+        console.log("userLanguage: ", userLanguage);
 
         await new Promise<void>((resolve, reject) => {
             db.run(
@@ -50,7 +49,7 @@ router.post("/proxy", async (req, res) => {
                  WHERE conversation_id = ? AND sender = ? AND text = ?`,
                 [
                     JSON.stringify({
-                        userLanguage: translatedText,
+                        [userLanguage]: translatedText,
                         Original: originalText
                     }),
                     conversationId,
@@ -65,7 +64,8 @@ router.post("/proxy", async (req, res) => {
             success: true,
             translatedText,
             targetLanguage: userLanguage,
-            fee_text: apiResponse
+            fee_text: translatedText,
+            chatID: chatID
         });
 
     } catch (err) {
