@@ -16,11 +16,14 @@ declare global {
 
 interface Message {
     id: number;
+    conversation_id: number;
     sender: string;
-    sender_username: string;
+    sender_username?: string; // 从JOIN查询获得，非表字段
     text: string;
+    status?: string; // 数据库有默认值
     timestamp: string;
-    isTranslation?: boolean;
+    translations?: string | null; // 对应数据库TEXT字段
+    isTranslation?: boolean; // 仅前端使用的标记
 }
 
 interface ConversationUserRow {
@@ -168,35 +171,26 @@ const ChatPage = () => {
         }
     };
 
-    const sendMessage = async (text?: string) => {
-        const messageToSend = text || inputText;
-        console.log("WebSocket状态:", ws.current?.readyState); // 应该是 1 (OPEN)
-        if (!messageToSend.trim() || !ws.current) return;
-        console.log(messageToSend);
-
-
-
+    const sendMessage = async () => {
+        if (!inputText.trim() || !ws.current) return;
 
         try {
-            let translated = "";
-            let isTranslation = false;
-
-            if (useZeroGTranslation && !text) {
-                translated = await translateWithZeroG(messageToSend);
-                isTranslation = true;
+            let translatedText = "";
+            if (useZeroGTranslation) {
+                translatedText = await translateWithZeroG(inputText); // 调用翻译API
             }
 
+            // 发送到WebSocket服务器
             ws.current.send(JSON.stringify({
-                text: text || messageToSend,
-                isTranslation,
-                translatedText: translated || undefined
+                text: inputText,
+                translatedText,
+                userLanguage,  // 当前用户的语言偏好
+                isTranslation: useZeroGTranslation
             }));
 
             setInputText("");
-            setTranslatedText("");
         } catch (error) {
-            console.error("发送消息失败:", error);
-            alert("消息发送失败");
+            console.error("发送失败:", error);
         }
     };
 
@@ -221,55 +215,74 @@ const ChatPage = () => {
                 marginBottom: '15px',
                 backgroundColor: '#f9f9f9'
             }}>
-                {messages.map((msg) => (
-                    <div key={msg.id} style={{
-                        marginBottom: '12px',
-                        padding: '10px',
-                        backgroundColor: msg.sender === userAddress ? '#e3f2fd' : '#ffffff',
-                        borderRadius: '8px',
-                        borderLeft: msg.isTranslation ? '4px solid #722ed1' : 'none',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                    }}>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginBottom: '6px',
-                            alignItems: 'center'
+                {messages.map((msg) => {
+                    // 判断当前用户是否是发送者（优先用 original_text）
+                    const isSender = msg.sender === userAddress;
+                    const translations = msg.translations ? JSON.parse(msg.translations) : null;
+
+                    const displayText = isSender
+                        ? translations?.Original || msg.text
+                        : translations?.[userLanguage] || msg.text;
+
+                    const isTranslated = !isSender && !!translations?.[userLanguage];
+
+                    return (
+                        <div key={msg.id} style={{
+                            marginBottom: '12px',
+                            padding: '10px',
+                            backgroundColor: isSender ? '#e3f2fd' : '#ffffff',
+                            borderRadius: '8px',
+                            borderLeft: isTranslated ? '4px solid #722ed1' : 'none',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
                         }}>
-                            <strong style={{
-                                color: msg.sender === userAddress ? '#1976d2' : '#333',
-                                fontSize: '0.95rem'
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                marginBottom: '6px',
+                                alignItems: 'center'
                             }}>
-                                {msg.sender_username || msg.sender}
-                            </strong>
-                            <span style={{
-                                color: '#666',
-                                fontSize: '0.75rem',
-                                fontWeight: '500'
-                            }}>
-                                {dayjs(msg.timestamp).format('HH:mm')}
-                                {msg.isTranslation && (
-                                    <span style={{
-                                        marginLeft: '6px',
-                                        color: '#722ed1',
-                                        fontSize: '0.7rem'
-                                    }}>
-                                        (翻译)
-                                    </span>
-                                )}
+                                <strong style={{
+                                    color: isSender ? '#1976d2' : '#333',
+                                    fontSize: '0.95rem'
+                                }}>
+                                    {msg.sender_username || msg.sender}
+                                </strong>
+                                <span style={{
+                                    color: '#666',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '500'
+                                }}>
+                        {dayjs(msg.timestamp).format('HH:mm')}
+                                    {isTranslated && (
+                                        <span style={{
+                                            marginLeft: '6px',
+                                            color: '#722ed1',
+                                            fontSize: '0.7rem'
+                                        }}>
+                                (翻译)
                             </span>
+                                    )}
+                    </span>
+                            </div>
+                            <div style={{
+                                fontSize: '0.9rem',
+                                lineHeight: '1.4',
+                                wordBreak: 'break-word'
+                            }}>
+                                {displayText}
+                                {/* 可选：显示原始消息（调试用） */}
+                                {!isSender && process.env.NODE_ENV === 'development' && (
+                                    <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '4px' }}>
+                                        {translations && `[存储的翻译: ${JSON.stringify(translations)}]`}
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div style={{
-                            fontSize: '0.9rem',
-                            lineHeight: '1.4',
-                            wordBreak: 'break-word'
-                        }}>
-                            {msg.text}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
                 <div ref={messagesEndRef} />
             </div>
+
 
             <div style={{
                 display: 'flex',
@@ -297,7 +310,7 @@ const ChatPage = () => {
                             {translatedText}
                         </div>
                         <button
-                            onClick={() => sendMessage(translatedText)}
+                            onClick={() => sendMessage()}
                             style={{
                                 padding: '6px 12px',
                                 backgroundColor: '#722ed1',
