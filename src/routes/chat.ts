@@ -73,7 +73,6 @@ const setupWebSocket = (server: any) => {
                 }
 
                 try {
-                    // 发送历史消息
                     const historyMessages = await getHistoryMessages(conversationId);
                     ws.send(JSON.stringify({
                         type: "history",
@@ -84,29 +83,55 @@ const setupWebSocket = (server: any) => {
                 }
 
                 // 监听消息
+// ... 其他代码保持不变 ...
+
                 ws.on("message", async (message) => {
                     try {
-                        const { text, isTranslation, translatedText } = JSON.parse(message.toString());
+                        const { text, isTranslation, translatedText, userLanguage } = JSON.parse(message.toString());
                         const userInfo = await getUserInfo(userAddress);
 
                         // 存储消息到数据库
                         db.run(
                             `INSERT INTO messages (
-                conversation_id, sender, text, status,
-                translations
-            ) VALUES (?, ?, ?, ?, ?)`,
+                                conversation_id,
+                                sender,
+                                text,
+                                translations
+                            ) VALUES (?, ?, ?, ?)`,
                             [
                                 conversationId,
                                 userAddress,
-                                text,
-                                'sent',
-                                isTranslation ? JSON.stringify({
-                                    Original: text,
-                                    Translation: translatedText
-                                }) : null
+                                isTranslation ? translatedText : text, // 接收者看到的内容
+                                isTranslation
+                                    ? JSON.stringify({
+                                        [userLanguage]: translatedText,
+                                        Original: text
+                                    })
+                                    : null
                             ],
                             function (err) {
-                                // ...广播逻辑不变...
+                                if (err) {
+                                    console.error("存储消息失败:", err);
+                                    return;
+                                }
+
+                                // 广播消息（区分发送者和接收者）
+                                wss.clients.forEach(client => {
+                                    if (client.readyState === WebSocket.OPEN) {
+                                        const isSender = client === ws; // 判断当前客户端是否是发送者
+                                        client.send(JSON.stringify({
+                                            type: "message",
+                                            message: {
+                                                id: this.lastID,
+                                                sender: userAddress,
+                                                sender_username: userInfo.username,
+                                                text: isSender ? text : translatedText, // 发送者看原文，接收者看译文
+                                                timestamp: new Date().toISOString(),
+                                                isTranslation: !isSender // 对接收者标记为翻译消息
+                                            }
+                                        }));
+                                    }
+                                });
                             }
                         );
                     } catch (error) {

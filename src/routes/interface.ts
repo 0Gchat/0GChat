@@ -25,9 +25,8 @@ export interface Message {
     sender: string;
     sender_username: string;
     text: string;
-    conversation_id: number;
+    conversation_id: string;
     timestamp: string;
-    status: string;
 }
 
 export interface ConversationUserRow {

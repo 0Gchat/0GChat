@@ -15,9 +15,8 @@ const router = express.Router();
 router.post("/proxy", async (req, res) => {
     try {
         const { content, headers, endpoint, model, conversationId, sender, originalText, userLanguage } = req.body;
-        console.log("POST /proxy");
 
-        // 3. 调用翻译API
+        // 调用翻译API
         const apiResponse = await fetch(`${endpoint}/chat/completions`, {
             method: "POST",
             headers: { "Content-Type": "application/json", ...headers },
@@ -27,39 +26,11 @@ router.post("/proxy", async (req, res) => {
             }),
         });
 
-
-
-        // 4. 存储翻译结果
         const translationResult = await apiResponse.json();
-
-        // await broker.inference.processResponse(providerAddress, apiResponse)
-
-
-        console.log("translationResult: ", translationResult);
         const translatedText = translationResult.choices?.[0]?.message?.content || "";
         const chatID = translationResult.id;
 
-
-        console.log("translatedText: ", translatedText);
-        console.log("userLanguage: ", userLanguage);
-
-        await new Promise<void>((resolve, reject) => {
-            db.run(
-                `UPDATE messages SET translations = ? 
-                 WHERE conversation_id = ? AND sender = ? AND text = ?`,
-                [
-                    JSON.stringify({
-                        [userLanguage]: translatedText,
-                        Original: originalText
-                    }),
-                    conversationId,
-                    sender,
-                    originalText
-                ],
-                (err) => err ? reject(err) : resolve()
-            );
-        });
-
+        // 返回翻译结果
         res.json({
             success: true,
             translatedText,
@@ -72,6 +43,7 @@ router.post("/proxy", async (req, res) => {
         res.status(500).json({ error: (err as Error).message });
     }
 });
+
 
 
 router.post("/settle-fee", async (req, res) => {
