@@ -157,8 +157,8 @@ const ChatPage = () => {
             const result = await response.json();
             console.log(result)
 
-            // await broker.inference.processResponse(providerAddress, "one")
-            // console.log("Response:successed")
+            await broker.inference.processResponse(providerAddress, JSON.stringify(result.fee_text), result.chatID);
+            console.log("Response:successed")
 
             return result.translatedText || result.text || "翻译失败";
 
@@ -173,6 +173,8 @@ const ChatPage = () => {
         console.log("WebSocket状态:", ws.current?.readyState); // 应该是 1 (OPEN)
         if (!messageToSend.trim() || !ws.current) return;
         console.log(messageToSend);
+
+
 
 
         try {
