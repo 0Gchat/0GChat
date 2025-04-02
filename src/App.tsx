@@ -5,7 +5,6 @@ import ProfileEdit from "./components/ProfileEdit";
 import ChatList from "./components/ChatList";
 import ChatPage from "./components/ChatPage";
 import Test from "./components/test";
-import TranslationService from "./components/TranslationService";
 import "./App.css";
 
 function App() {
