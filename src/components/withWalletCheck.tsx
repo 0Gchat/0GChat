@@ -15,7 +15,7 @@ const withWalletCheck = (WrappedComponent: React.ComponentType) => {
             }
         }, [walletAddress, navigate]);
 
-        console.log(walletAddress)
+        // console.log(walletAddress)
 
 
         // 如果正在检查钱包连接，不渲染任何内容

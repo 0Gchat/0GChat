@@ -74,8 +74,12 @@ const ChatList = () => {
 
     // 跳转到聊天页面
     const handleContactClick = (conversation_id: number) => {
-        console.log(conversation_id);
-        navigate(`/chat/${conversation_id}`);
+        navigate(`/chat/${conversation_id}`, {
+            state: {
+                sessionKey: localStorage.getItem("walletAddress"), // 传递用户地址作为会话键
+                conversationId: conversation_id // 也可以传递conversationId
+            }
+        });
     };
 
     return (

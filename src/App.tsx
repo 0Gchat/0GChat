@@ -5,7 +5,7 @@ import ProfileEdit from "./components/ProfileEdit";
 import ChatList from "./components/ChatList";
 import ChatPage from "./components/ChatPage";
 import Test from "./components/test";
-
+import TranslationService from "./components/TranslationService";
 import "./App.css";
 
 function App() {
@@ -17,7 +17,7 @@ function App() {
                     <Route path="/" element={<WalletConnect />} />
                     <Route path="/profile-edit" element={<ProfileEdit />} />
                     <Route path="/chat-list" element={<ChatList />} />
-                    <Route path="/chat" element={<ChatPage />} />
+                    <Route path="/chat/:conversationId" element={<ChatPage />} />
                     <Route path="/test" element={<Test />} />
                 </Routes>
             </div>
