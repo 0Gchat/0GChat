@@ -9,16 +9,18 @@ import db from "./db";
 import authRoutes from "./routes/auth";
 import contactRoutes from "./routes/contact";
 import setupWebSocket from "./routes/chat";
+import testRoutes from "./routes/test_api"
 
 // 初始化数据库
 const initDatabase = () => {
     const createUserTableSQL = `
         CREATE TABLE IF NOT EXISTS users (
-             address TEXT PRIMARY KEY, -- 用户地址作为主键
-             username TEXT, -- 用户名
-             avatar_url TEXT, -- 头像 URL
-             created_at DATETIME DEFAULT CURRENT_TIMESTAMP, -- 用户创建时间
-             updated_at DATETIME -- 用户信息更新时间
+             address TEXT PRIMARY KEY,
+             username TEXT,
+             avatar_url TEXT,
+             language TEXT DEFAULT 'English',
+             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+             updated_at DATETIME
         );
     `;
 
@@ -52,8 +54,9 @@ const initDatabase = () => {
             text TEXT NOT NULL,
             status TEXT DEFAULT 'sent',
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            translations TEXT,
             FOREIGN KEY (conversation_id) REFERENCES conversations(id)
-            );
+        );
     `;
 
     db.exec(createUserTableSQL, (err: Error | null) => {
@@ -107,6 +110,7 @@ app.use(express.json());
 // 路由
 app.use("/auth", authRoutes);
 app.use("/contact", contactRoutes);
+app.use("/test", testRoutes);
 
 // 静态文件服务
 const uploadsPath = path.join(__dirname, "uploads");

@@ -92,63 +92,71 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
 
 
 // 更新用户信息路由
+// 更新用户信息路由
 router.post("/updateProfile", upload.single("avatar"), async (req: Request, res: Response) => {
-    const {raw_address, username, message, signature} = req.body;
+    const { raw_address, username, language = 'en', message, signature } = req.body;
     const avatarFile = req.file;
-    const address = normalizeAddress(raw_address)
-
+    const address = normalizeAddress(raw_address);
 
     if (!address || !username) {
-        res.status(400).json({message: "请填写用户名"});
+        res.status(400).json({ message: "请填写用户名" });
         return;
     }
 
-    if (message && signature && avatarFile) {
-        console.log("upload to 0g...")
-        try {
+    try {
+        // 验证签名（如果有头像上传）
+        if (message && signature && avatarFile) {
             const recoveredAddress = ethers.verifyMessage(message, signature);
-
             if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
-                res.status(401).json({message: "签名验证失败"});
+                res.status(401).json({ message: "签名验证失败" });
                 return;
             }
-
-            // 本地存储头像文件
-            const avatarUrl = `/uploads/${avatarFile.filename}`;
-
-            // 更新数据库
-            const stmt = db.prepare(`
-                UPDATE users
-                SET username   = ?,
-                    avatar_url = ?,
-                    updated_at = ?
-                WHERE address = ?
-            `);
-            stmt.run(username, avatarUrl, new Date().toISOString(), address);
-
-            res.json({message: "个人信息更新成功", avatarUrl});
-        } catch (error) {
-            console.error("更新失败:", error);
-            res.status(500).json({message: "服务器错误"});
         }
-    } else if (address && username) {
-        console.log("only update username")
-        const timestamp = Date.now(); // 获取当前时间戳
+
+        // 构建更新数据
+        const updateData: any = {
+            username,
+            language, // 添加语言字段
+            updated_at: new Date().toISOString()
+        };
+
+        // 如果有头像，添加头像URL
+        if (avatarFile) {
+            updateData.avatar_url = `/uploads/${avatarFile.filename}`;
+        }
+
+        // 更新数据库
         const stmt = db.prepare(`
             UPDATE users
-            SET username   = ?,
+            SET username = ?,
+                language = ?,
+                ${avatarFile ? 'avatar_url = ?,' : ''}
                 updated_at = ?
             WHERE address = ?
         `);
-        stmt.run(username, new Date(timestamp).toISOString(), address, function (err: Error | null) {
+
+        const params = avatarFile
+            ? [username, language, updateData.avatar_url, updateData.updated_at, address]
+            : [username, language, updateData.updated_at, address];
+
+        stmt.run(params, function (err: Error | null) {
             if (err) {
                 console.error("更新用户信息失败:", err);
-                res.status(500).json({message: "更新用户信息失败"});
+                res.status(500).json({ message: "更新用户信息失败" });
                 return;
             }
-            res.json({message: "个人信息更新成功", username});
+            res.json({
+                message: "个人信息更新成功",
+                username,
+                language,
+                ...(avatarFile && { avatarUrl: updateData.avatar_url })
+            });
         });
+    } catch (error) {
+        console.error("更新失败:", error);
+        res.status(500).json({ message: "服务器错误" });
     }
 });
+
 
 export default router;

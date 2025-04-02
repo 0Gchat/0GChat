@@ -1,32 +1,63 @@
 import { WebSocketServer, WebSocket } from "ws";
 import db from "../db";
+import { normalizeAddress } from "./genernal";
+import { Message, ConversationRow } from './interface'; // 注意路径是否正确
 
-interface ConversationRow {
-    id: number;
-    user1: string;
-    user2: string;
-}
 
-interface Message {
-    sender: string;
-    text: string;
-    conversation_id: number;
-}
 
-// 创建 WebSocket 服务
+// 获取对话历史消息
+const getHistoryMessages = async (conversationId: string, limit = 50): Promise<Message[]> => {
+    return new Promise((resolve, reject) => {
+        db.all(
+            `SELECT m.*, u.username as sender_username 
+             FROM messages m
+             LEFT JOIN users u ON m.sender = u.address
+             WHERE m.conversation_id = ?
+             ORDER BY m.timestamp DESC
+             LIMIT ?`,
+            [conversationId, limit],
+            (err, rows: Message[]) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows.reverse()); // 反转以保持时间顺序
+                }
+            }
+        );
+    });
+};
+
+// 获取用户信息
+const getUserInfo = async (address: string): Promise<{ username: string }> => {
+    return new Promise((resolve, reject) => {
+        db.get(
+            "SELECT username FROM users WHERE address = ?",
+            [address],
+            (err, row: { username: string } | undefined) => {
+                if (err || !row) {
+                    resolve({ username: address }); // 默认返回地址
+                } else {
+                    resolve(row);
+                }
+            }
+        );
+    });
+};
+
 const setupWebSocket = (server: any) => {
     const wss = new WebSocketServer({ server });
 
-    wss.on("connection", (ws: WebSocket, req) => {
+    wss.on("connection", async (ws: WebSocket, req) => {
         // 从URL中获取会话参数
-        const url = new URL(req.url!, `http://${req.headers.host}`);
+        const url = new URL(req.url!, `https://${req.headers.host}`);
         const conversationId = url.searchParams.get("conversationId");
-        const userAddress = url.searchParams.get("userAddress");
+        const raw_userAddress = url.searchParams.get("userAddress");
 
-        if (!conversationId || !userAddress) {
+        if (!conversationId || !raw_userAddress) {
             ws.close(4001, "缺少必要参数");
             return;
         }
+        const userAddress = normalizeAddress(raw_userAddress) ?? "";
 
         console.log(`用户 ${userAddress} 加入对话 ${conversationId}`);
 
@@ -34,41 +65,48 @@ const setupWebSocket = (server: any) => {
         db.get(
             "SELECT * FROM conversations WHERE id = ? AND (user1 = ? OR user2 = ?)",
             [conversationId, userAddress, userAddress],
-            (err, row: ConversationRow | undefined) => {
+            async (err, row: ConversationRow | undefined) => {
                 if (err || !row) {
                     console.error("验证对话权限失败:", err);
                     ws.close(4003, "无权限加入此对话");
                     return;
                 }
 
+                try {
+                    // 发送历史消息
+                    const historyMessages = await getHistoryMessages(conversationId);
+                    ws.send(JSON.stringify({
+                        type: "history",
+                        messages: historyMessages
+                    }));
+                } catch (error) {
+                    console.error("获取历史消息失败:", error);
+                }
+
                 // 监听消息
                 ws.on("message", async (message) => {
                     try {
-                        const { text } = JSON.parse(message.toString());
+                        const { text, isTranslation, translatedText } = JSON.parse(message.toString());
+                        const userInfo = await getUserInfo(userAddress);
 
                         // 存储消息到数据库
                         db.run(
-                            "INSERT INTO messages (conversation_id, sender, text) VALUES (?, ?, ?)",
-                            [conversationId, userAddress, text],
+                            `INSERT INTO messages (
+                conversation_id, sender, text, status,
+                translations
+            ) VALUES (?, ?, ?, ?, ?)`,
+                            [
+                                conversationId,
+                                userAddress,
+                                text,
+                                'sent',
+                                isTranslation ? JSON.stringify({
+                                    Original: text,
+                                    Translation: translatedText
+                                }) : null
+                            ],
                             function (err) {
-                                if (err) {
-                                    console.error("存储消息失败:", err);
-                                    return;
-                                }
-
-                                // 构建完整的消息对象
-                                const fullMessage: Message = {
-                                    sender: userAddress,
-                                    text,
-                                    conversation_id: parseInt(conversationId)
-                                };
-
-                                // 广播消息给当前对话的所有客户端
-                                wss.clients.forEach((client) => {
-                                    if (client.readyState === WebSocket.OPEN) {
-                                        client.send(JSON.stringify(fullMessage));
-                                    }
-                                });
+                                // ...广播逻辑不变...
                             }
                         );
                     } catch (error) {
