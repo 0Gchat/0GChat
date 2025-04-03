@@ -70,3 +70,8 @@
 .user-address {
   font-size: 14px;
 } 
+.logo-image{
+  width: 80%;
+  border-radius: 20px;
+  margin: 20px auto;
+}
