@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import { ethers } from "ethers";
-import privateKeyData from "./private_key.json";
+import privateKeyData from "../assets/private_key.json";
 
 const Test = () => {
     const [services, setServices] = useState<any[]>([]);

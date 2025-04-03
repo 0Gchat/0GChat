@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import withWalletCheck from "./withWalletCheck";
-import { Contact } from "./types";
+import withWalletCheck from "../components/withWalletCheck";
+import { Contact } from "../components/types";
 
 interface DisplayContact {
     address: string;

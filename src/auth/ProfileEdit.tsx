@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ethers } from "ethers";
-import withWalletCheck from "./withWalletCheck";
+import withWalletCheck from "../components/withWalletCheck";
 
 const languageOptions = [
     { value: 'English', label: 'English' },

@@ -1,9 +1,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import WalletConnect from "./components/WalletConnect";
-import ProfileEdit from "./components/ProfileEdit";
-import ChatList from "./components/ChatList";
-import ChatPage from "./components/ChatPage";
+import WalletConnect from "./auth/WalletConnect";
+import ProfileEdit from "./auth/ProfileEdit";
+import ChatList from "./chat/ChatList";
+import ChatPage from "./chat/ChatPage";
 import Test from "./components/test";
 import Layout from "./components/Layout";
 import "./App.css";
