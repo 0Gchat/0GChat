@@ -1,0 +1,92 @@
+.wallet-connect-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, rgba(10, 10, 30, 0.8), rgba(20, 20, 60, 0.9));
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.wallet-connect-container p {
+  color: #e0e0ff;
+  font-size: 0.9rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: rgba(20, 20, 40, 0.5);
+  padding: 0.8rem;
+  border-radius: 8px;
+  border-left: 3px solid #5045cc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.wallet-btn {
+  position: relative;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: linear-gradient(45deg, #5045cc, #8066ff);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 15px rgba(80, 69, 204, 0.3);
+  z-index: 1;
+}
+
+.wallet-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: all 0.6s ease;
+  z-index: -1;
+}
+
+.wallet-btn:hover {
+  box-shadow: 0 8px 20px rgba(80, 69, 204, 0.5);
+  transform: translateY(-3px);
+  background: linear-gradient(45deg, #6055dc, #9076ff);
+}
+
+.wallet-btn:hover::before {
+  left: 100%;
+}
+
+.wallet-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(80, 69, 204, 0.4);
+}
+
+.sign-btn {
+  background: linear-gradient(45deg, #ff5e62, #ff9966);
+  box-shadow: 0 6px 15px rgba(255, 94, 98, 0.3);
+}
+
+.sign-btn:hover {
+  background: linear-gradient(45deg, #ff6e72, #ffa976);
+  box-shadow: 0 8px 20px rgba(255, 94, 98, 0.5);
+}
+
+.wallet-address {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: #b0b0ff;
+}
+
+.signature {
+  font-size: 0.75rem;
+  max-height: 80px;
+  overflow-y: auto;
+}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
-
+import "./WalletConnect.css";
 declare global {
     interface Window {
         ethereum?: any;
@@ -71,13 +71,14 @@ const WalletConnect = () => {
     };
 
     return (
-        <div>
-            <button onClick={connectWallet}>连接钱包</button>
-            {walletAddress && <p>钱包地址: {walletAddress}</p>}
-            {walletAddress && !isRegistered && <button onClick={signMessage}>签署消息</button>}
-            {signature && <p>签名: {signature}</p>}
+        <div className="wallet-connect-container">
+            <button className="wallet-btn" onClick={connectWallet}>连接钱包</button>
+            {walletAddress && <p className="wallet-address">钱包地址: {walletAddress}</p>}
+            {walletAddress && !isRegistered && <button className="wallet-btn sign-btn" onClick={signMessage}>签署消息</button>}
+            {signature && <p className="signature">签名: {signature}</p>}
         </div>
     );
 };
+
 
 export default WalletConnect;
