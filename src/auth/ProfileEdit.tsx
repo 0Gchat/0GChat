@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { ethers } from "ethers";
-import withWalletCheck from "./withWalletCheck";
-import "./ProfileEdit.css";
+import withWalletCheck from "../components/withWalletCheck";
+import "../styles/ProfileEdit.css";
 import { Upload, message } from "antd";
 import type {
   UploadChangeParam,
