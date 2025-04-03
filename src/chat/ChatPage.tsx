@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import withWalletCheck from "./withWalletCheck";
-import privateKeyData from "./private_key.json";
+import withWalletCheck from "../components/withWalletCheck";
+import privateKeyData from "../assets/private_key.json";
 import { ethers } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import dayjs from "dayjs";
