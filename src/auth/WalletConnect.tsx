@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
-import "./WalletConnect.css";
+import "../styles/WalletConnect.css";
 declare global {
   interface Window {
     ethereum?: any;
