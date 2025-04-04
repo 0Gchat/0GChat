@@ -7,6 +7,8 @@ import ChatPage from "./chat/ChatPage";
 import Test from "./components/test";
 import Layout from "./components/Layout";
 import "./App.css";
+import ContactsAuth from "./reports/ContactsAuth";
+
 
 function App() {
   return (
@@ -18,6 +20,7 @@ function App() {
           <Route path="/chat-list" element={<ChatList />} />
           <Route path="/chat/:conversationId" element={<ChatPage />} />
           <Route path="/test" element={<Test />} />
+          <Route path="/contacts-auth" element={<ContactsAuth />} />
         </Routes>
       </Layout>
     </Router>
