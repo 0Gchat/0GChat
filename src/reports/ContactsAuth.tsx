@@ -10,19 +10,15 @@ interface Contact {
     conversation_id: number;
 }
 
-interface Conversation {
-    id: number;
-    created_at: string;
-    partner: {
-        address: string;
-        username: string;
-    };
+interface AuthorizedTask {
+    conversationId: number;
+    isActive: boolean;
 }
 
 const ContactsAuth: React.FC = () => {
     const navigate = useNavigate();
     const [contacts, setContacts] = useState<Contact[]>([]);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [authorizedTasks, setAuthorizedTasks] = useState<AuthorizedTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [authorizing, setAuthorizing] = useState(false);
     const walletAddress = localStorage.getItem("walletAddress");
@@ -33,87 +29,77 @@ const ContactsAuth: React.FC = () => {
             return;
         }
 
-        fetchContacts();
+        fetchData();
     }, [walletAddress, navigate]);
 
-    const fetchContacts = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:5001/contact/list?userAddress=${walletAddress}`);
-            console.log(response);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log(data);
-            setContacts(data.contacts);
+            // 获取联系人列表
+            const contactsResponse = await fetch(`http://localhost:5001/contact/list?userAddress=${walletAddress}`);
+            if (!contactsResponse.ok) throw new Error("获取联系人失败");
+            const contactsData = await contactsResponse.json();
+
+            // 获取授权信息
+            const authResponse = await fetch(`http://localhost:5001/contact/authorized-list?userAddress=${walletAddress}`);
+            if (!authResponse.ok) throw new Error("获取授权信息失败");
+            const authData = await authResponse.json();
+
+            setContacts(contactsData.contacts);
+            setAuthorizedTasks(authData.authorizedTasks);
         } catch (error) {
-            console.error("获取联系人失败:", error);
-            message.error("获取联系人失败");
+            console.error("获取数据失败:", error);
+            message.error("获取数据失败");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSelect = (id: number) => {
-        setSelectedIds(prev =>
-            prev.includes(id)
-                ? prev.filter(i => i !== id)
-                : [...prev, id]
-        );
+    const isChecked = (conversationId: number) => {
+        const task = authorizedTasks.find(t => t.conversationId === conversationId);
+        return task ? task.isActive : false;
     };
 
-    const handleAuthorize = async () => {
-        if (selectedIds.length === 0) {
-            message.warning("请至少选择一个对话");
-            return;
-        }
-
+    const handleAuthorize = async (conversationId: number, isActive: boolean) => {
         try {
-            setAuthorizing(true);
-
-            const results = await Promise.all(
-                selectedIds.map(async id => {
-                    const response = await fetch("http://localhost:5001/task/authorize", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            userAddress: walletAddress,
-                            conversationId: id
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`授权失败: ${response.status}`);
-                    }
-
-                    return response.json();
+            const response = await fetch("http://localhost:5001/task/authorize", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    userAddress: walletAddress,
+                    conversationId,
+                    isActive
                 })
-            );
+            });
 
-            message.success("授权成功");
-            setSelectedIds([]);
+            if (!response.ok) {
+                throw new Error(`授权失败: ${response.status}`);
+            }
+
+            // 更新本地状态
+            setAuthorizedTasks(prev => {
+                const existing = prev.find(t => t.conversationId === conversationId);
+                if (existing) {
+                    return prev.map(t =>
+                        t.conversationId === conversationId
+                            ? { ...t, isActive }
+                            : t
+                    );
+                }
+                return [...prev, { conversationId, isActive }];
+            });
+
+            message.success("授权状态更新成功");
         } catch (error) {
             console.error("授权失败:", error);
             message.error("授权失败");
-        } finally {
-            setAuthorizing(false);
         }
     };
 
     if (!walletAddress) return null;
-
-    const contactConversations = contacts.map(contact => ({
-        id: contact.conversation_id,
-        created_at: contact.createdAt,
-        partner: {
-            address: contact.address,
-            username: contact.username
-        }
-    }));
 
     return (
         <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
@@ -123,35 +109,24 @@ const ContactsAuth: React.FC = () => {
             <Spin spinning={loading}>
                 <List
                     itemLayout="horizontal"
-                    dataSource={contactConversations}
-                    renderItem={item => (
+                    dataSource={contacts}
+                    renderItem={contact => (
                         <List.Item
                             actions={[
                                 <Checkbox
-                                    checked={selectedIds.includes(item.id)}
-                                    onChange={() => handleSelect(item.id)}
+                                    checked={isChecked(contact.conversation_id)}
+                                    onChange={e => handleAuthorize(contact.conversation_id, e.target.checked)}
                                 />
                             ]}
                         >
                             <List.Item.Meta
-                                title={`与 ${item.partner.username} 的对话`}
-                                description={`创建时间: ${new Date(item.created_at).toLocaleString()}`}
+                                title={`与 ${contact.username} 的对话`}
+                                description={`创建时间: ${new Date(contact.createdAt).toLocaleString()}`}
                             />
                         </List.Item>
                     )}
                 />
             </Spin>
-
-            <div style={{ marginTop: "20px", textAlign: "right" }}>
-                <Button
-                    type="primary"
-                    onClick={handleAuthorize}
-                    loading={authorizing}
-                    disabled={selectedIds.length === 0}
-                >
-                    授权选中的对话
-                </Button>
-            </div>
         </div>
     );
 };

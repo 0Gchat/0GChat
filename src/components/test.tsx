@@ -9,7 +9,9 @@ const Test = () => {
     const [error, setError] = useState<string | null>(null);
     const [balance, setBalance] = useState<string | null>(null);
     const brokerRef = useRef<any>(null);
-    const providerAddress = '0xf07240Efa67755B5311bc75784a061eDB47165Dd';
+    const providerAddress = '0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3';
+    const [settleAmount, setSettleAmount] = useState<string>("0.000000000000000088000000000000006296"); // 默认值
+
 
     const initializeBroker = async () => {
         try {
@@ -89,7 +91,7 @@ const Test = () => {
             setError(null);
 
             const content = "Please translate this text to English: 比特币今天的价格又在下跌，我觉得现在应该要抛售了！";
-            const providerAddress = '0xf07240Efa67755B5311bc75784a061eDB47165Dd';
+            const providerAddress = '0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3';
 
             const { endpoint, model } = await brokerRef.current.inference.getServiceMetadata(
                 providerAddress
@@ -196,13 +198,34 @@ const Test = () => {
                     测试api
                 </button>
 
-                <button
-                    onClick={() => mannual_settle(0.000000000000000009000000000000000644)}
-                    disabled={loading || !brokerRef.current}
-                    style={buttonStyle("#2196F3")}
-                >
-                    手动结算费用
-                </button>
+                <div style={{
+                    display: "flex",
+                    gap: "10px",
+                    alignItems: "center",
+                    marginTop: "10px",
+                    width: "100%"
+                }}>
+                    <input
+                        type="text"
+                        value={settleAmount}
+                        onChange={(e) => setSettleAmount(e.target.value)}
+                        style={{
+                            padding: "10px",
+                            border: "1px solid #ddd",
+                            borderRadius: "4px",
+                            flex: 1,
+                            maxWidth: "300px"
+                        }}
+                        placeholder="输入结算金额"
+                    />
+                    <button
+                        onClick={() => mannual_settle(parseFloat(settleAmount))}
+                        disabled={loading || !brokerRef.current}
+                        style={buttonStyle("#2196F3")}
+                    >
+                        手动结算费用
+                    </button>
+                </div>
 
             </div>
 
