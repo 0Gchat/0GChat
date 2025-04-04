@@ -1,11 +1,4 @@
-
-export interface ContactRow {
-    contact: string;
-    username: string | null;
-    created_at: string;
-    conversation_id: number
-}
-
+// This file contains the TypeScript interfaces for the database rows.
 export interface UserRow {
     address: string;
     username: string | null;
@@ -54,4 +47,17 @@ export interface ConversationRow {
     created_at: string;
     user1_name: string;
     user2_name: string;
+}
+
+export interface AuthorizedTaskRow {
+    conversation_id: number;
+    is_active: number; // SQLite 使用 0/1 表示布尔值
+    contact: string;
+    username: string;
+}
+
+export interface MessageRow {
+    sender: string;
+    text: string;
+    timestamp: string; // 或 Date，根据实际数据库存储类型
 }

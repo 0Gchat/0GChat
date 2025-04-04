@@ -6,10 +6,11 @@ import path from "path";
 import fs from "fs";
 // import {ZgFile, Indexer} from '@0glabs/0g-ts-sdk';
 import {normalizeAddress} from './genernal'
+import {UserRow} from "./interface";
 
 const router = express.Router();
 
-// 设置 multer 存储路径
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadPath = path.join(__dirname, "../../uploads");
@@ -91,8 +92,7 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
 });
 
 
-// 更新用户信息路由
-// 更新用户信息路由
+
 router.post("/updateProfile", upload.single("avatar"), async (req: Request, res: Response) => {
     const { raw_address, username, language = 'en', message, signature } = req.body;
     const avatarFile = req.file;
@@ -158,5 +158,52 @@ router.post("/updateProfile", upload.single("avatar"), async (req: Request, res:
     }
 });
 
+
+router.post("/userInfo", async (req: Request, res: Response): Promise<void> => {
+    const { address: rawAddress } = req.body;
+
+    // 验证参数
+    if (!rawAddress || typeof rawAddress !== 'string') {
+        res.status(400).json({ message: "地址参数不能为空" });
+        return;
+    }
+
+    try {
+        const address = normalizeAddress(rawAddress);
+
+        // 查询用户信息
+        db.get(
+            "SELECT * FROM users WHERE address = ?",
+            [address],
+            (err, row:UserRow) => {
+                if (err) {
+                    console.error("数据库查询失败:", err);
+                    res.status(500).json({ message: "数据库查询失败" });
+                    return;
+                }
+
+                if (!row) {
+                    res.status(404).json({ message: "用户未找到" });
+                    return;
+                }
+
+                // 返回所有用户信息
+                res.json({
+                    success: true,
+                    userInfo: {
+                        address: row.address,
+                        username: row.username,
+                        avatar_url: row.avatar_url,
+                        language: row.language,
+                        created_at: row.created_at,
+                    }
+                });
+            }
+        );
+    } catch (error) {
+        console.error("获取用户信息失败:", error);
+        res.status(500).json({ message: "服务器错误" });
+    }
+});
 
 export default router;
