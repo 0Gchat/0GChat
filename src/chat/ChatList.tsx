@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import withWalletCheck from "../components/withWalletCheck";
 import { Contact } from "../components/types";
+import { Input } from 'antd';
+const { Search } = Input;
+import { Avatar, List } from 'antd';
+
 
 interface DisplayContact {
     address: string;
@@ -83,9 +87,18 @@ const ChatList = () => {
     };
 
     return (
-        <div>
+        <div className="chatListContainer">
             <h2>联系人列表</h2>
-            <div>
+            <Search
+                style={{ width: '400px', marginBottom: '20px' }}
+                placeholder="输入联系人地址"
+                allowClear
+                enterButton="添加联系人"
+                size="large"
+                onChange={(e) => setNewContactAddress(e.target.value)}
+                onSearch={handleAddContact}
+            />
+            {/* <div>
                 <input
                     type="text"
                     value={newContactAddress}
@@ -93,8 +106,8 @@ const ChatList = () => {
                     placeholder="输入联系人地址"
                 />
                 <button onClick={handleAddContact}>添加联系人</button>
-            </div>
-            <ul>
+            </div> */}
+            {/* <ul>
                 {contacts.map((contact) => (
                     <li
                         key={`${contact.address}-${contact.conversation_id}`} // 添加唯一key
@@ -104,7 +117,20 @@ const ChatList = () => {
                         {contact.displayName}
                     </li>
                 ))}
-            </ul>
+            </ul> */}
+              <List
+                itemLayout="horizontal"
+                dataSource={contacts}
+                renderItem={(item, index) => (
+                <List.Item onClick={() => handleContactClick(item.conversation_id)} style={{ cursor: 'pointer' }}>
+                    <List.Item.Meta
+                    style={{ display: 'flex', alignItems: 'center' }}
+                    avatar={<Avatar style={{ backgroundColor: 'rgba(0, 110, 249, 0.5)' }}> {item.displayName.slice(0, 2)} </Avatar>}
+                    title={<span style={{ margin: 0, color: '#fff', fontSize: '25px' }}>{item.displayName}</span>}
+                    />
+                </List.Item>
+                )}
+            />
         </div>
     );
 };
