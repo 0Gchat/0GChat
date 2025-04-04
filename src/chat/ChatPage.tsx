@@ -57,7 +57,7 @@ const ChatPage = () => {
     const ws = useRef<WebSocket | null>(null);
     const [userLanguage, setUserLanguage] = useState('English');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const providerAddress = '0xf07240Efa67755B5311bc75784a061eDB47165Dd';
+    const providerAddress = '0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3';
 
 
 
