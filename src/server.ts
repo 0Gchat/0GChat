@@ -11,6 +11,7 @@ import contactRoutes from "./routes/contact";
 import setupWebSocket from "./routes/chat";
 import testRoutes from "./routes/test_api"
 import taskRoutes from "./routes/task";
+import messageRoutes from "./routes/message";
 
 // 初始化数据库
 const initDatabase = () => {
@@ -65,6 +66,7 @@ const initDatabase = () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_address TEXT NOT NULL,          -- 用户地址
             conversation_id INTEGER NOT NULL,     -- 授权用于生成日报的对话ID
+            is_active BOOLEAN DEFAULT 0,          -- 是否激活
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME,
             FOREIGN KEY (user_address) REFERENCES users(address),
@@ -135,6 +137,7 @@ app.use("/auth", authRoutes);
 app.use("/contact", contactRoutes);
 app.use("/test", testRoutes);
 app.use("/task", taskRoutes);
+app.use("/message", messageRoutes);
 
 // 静态文件服务
 const uploadsPath = path.join(__dirname, "uploads");

@@ -1,13 +1,12 @@
 import express, { Request, Response } from "express";
 import db from "../db";
 import {normalizeAddress} from "./genernal";
-import {int} from "aws-sdk/clients/datapipeline";
-import { ConversationUserRow, ContactRow } from './interface';
+// import {int} from "aws-sdk/clients/datapipeline";
+import { ConversationUserRow, ContactRow, AuthorizedTaskRow } from './interface';
 
 const router = express.Router();
 
 
-// 添加联系人
 router.post("/add", (req: Request, res: Response): void => {
     const { raw_address, raw_contactAddress } = req.body;
     console.log("processing ", raw_address);
@@ -43,7 +42,7 @@ router.post("/add", (req: Request, res: Response): void => {
                     return res.status(400).json({ message: "该联系人已存在" });
                 }
 
-                // 2. 创建新对话（修改此处）
+                // 2. 创建新对话
                 db.run(
                     "INSERT INTO conversations (user1, user2) VALUES (?, ?)",
                     [address, contactAddress],
@@ -56,15 +55,24 @@ router.post("/add", (req: Request, res: Response): void => {
 
                         const conversationId = this.lastID;
 
-                        // 3. 插入双向联系人关系
+                        // 3. 插入双向联系人关系和授权任务
                         const stmt = db.prepare(`
+                            -- 插入联系人关系
                             INSERT INTO contacts (owner, contact, conversation_id)
-                            VALUES (?, ?, ?), (?, ?, ?)
+                            VALUES (?, ?, ?), (?, ?, ?);
+                            
+                            -- 插入授权任务
+                            INSERT INTO authorized_tasks (user_address, conversation_id, is_active)
+                            VALUES (?, ?, 0), (?, ?, 0)
+                            ON CONFLICT(user_address, conversation_id) 
+                            DO UPDATE SET updated_at = CURRENT_TIMESTAMP;
                         `);
 
                         stmt.run(
                             address, contactAddress, conversationId,
                             contactAddress, address, conversationId,
+                            address, conversationId,
+                            contactAddress, conversationId,
                             function (err: Error | null) {
                                 if (err) {
                                     console.error("添加联系人失败:", err.message);
@@ -87,8 +95,6 @@ router.post("/add", (req: Request, res: Response): void => {
     });
 });
 
-
-// 获取联系人列表
 router.get("/list", (req: Request, res: Response): void => {
     const userAddress = typeof req.query.userAddress === 'string' ? req.query.userAddress : undefined;
     console.log("processing ", userAddress);
@@ -199,5 +205,46 @@ router.get("/user-info", async (req: Request, res: Response): Promise<any> => {
         res.status(500).json({ error: "服务器内部错误" });
     }
 });
+
+router.get("/authorized-list", (req: Request, res: Response): void => {
+    const userAddress = typeof req.query.userAddress === 'string' ? req.query.userAddress : undefined;
+
+    if (!userAddress) {
+        res.status(400).json({ message: "缺少必要参数" });
+        return;
+    }
+
+    try {
+        const address = normalizeAddress(userAddress);
+
+        db.all(
+            `SELECT at.conversation_id, at.is_active, c.contact, u.username
+             FROM authorized_tasks at
+             JOIN contacts c ON at.conversation_id = c.conversation_id AND at.user_address = c.owner
+             JOIN users u ON c.contact = u.address
+             WHERE at.user_address = ?`,
+            [address],
+            (err, rows: AuthorizedTaskRow[]) => {
+                if (err) {
+                    console.error("数据库查询失败:", err);
+                    return res.status(500).json({ message: "数据库查询失败" });
+                }
+
+                res.json({
+                    authorizedTasks: rows.map(row => ({
+                        conversationId: row.conversation_id,
+                        isActive: Boolean(row.is_active),
+                        contactAddress: row.contact,
+                        username: row.username
+                    }))
+                });
+            }
+        );
+
+    } catch (error) {
+        res.status(400).json({ message: "地址格式错误" });
+    }
+});
+
 
 export default router;
