@@ -91,7 +91,7 @@ router.post("/add", (req: Request, res: Response): void => {
 // 获取联系人列表
 router.get("/list", (req: Request, res: Response): void => {
     const userAddress = typeof req.query.userAddress === 'string' ? req.query.userAddress : undefined;
-
+    console.log("processing ", userAddress);
     if (!userAddress) {
         res.status(400).json({ message: "缺少必要参数" });
         return;

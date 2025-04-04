@@ -46,3 +46,12 @@ export interface ContactRow {
     created_at: string;
     conversation_id: number;
 }
+
+export interface ConversationRow {
+    id: number;
+    user1: string;
+    user2: string;
+    created_at: string;
+    user1_name: string;
+    user2_name: string;
+}
