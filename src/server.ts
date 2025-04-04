@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth";
 import contactRoutes from "./routes/contact";
 import setupWebSocket from "./routes/chat";
 import testRoutes from "./routes/test_api"
+import taskRoutes from "./routes/task";
 
 // 初始化数据库
 const initDatabase = () => {
@@ -59,6 +60,20 @@ const initDatabase = () => {
         );
     `;
 
+    const createAuthorizedTasksTableSQL = `
+        CREATE TABLE IF NOT EXISTS authorized_tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_address TEXT NOT NULL,          -- 用户地址
+            conversation_id INTEGER NOT NULL,     -- 授权用于生成日报的对话ID
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME,
+            FOREIGN KEY (user_address) REFERENCES users(address),
+            FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+            UNIQUE(user_address, conversation_id)
+        );
+    `;
+
+
     db.exec(createUserTableSQL, (err: Error | null) => {
         if (err) {
             console.error("创建用户表失败:", err);
@@ -90,6 +105,14 @@ const initDatabase = () => {
             console.log("联系人表已创建或已存在");
         }
     });
+
+    db.exec(createAuthorizedTasksTableSQL, (err: Error | null) => {
+        if (err) {
+            console.error("创建授权任务表失败:", err);
+        } else {
+            console.log("授权任务表已创建或已存在");
+        }
+    });
 };
 
 
@@ -111,6 +134,7 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/contact", contactRoutes);
 app.use("/test", testRoutes);
+app.use("/task", taskRoutes);
 
 // 静态文件服务
 const uploadsPath = path.join(__dirname, "uploads");
