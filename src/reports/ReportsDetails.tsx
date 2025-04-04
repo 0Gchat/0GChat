@@ -137,7 +137,7 @@ const ReportsDetails: React.FC = () => {
 
         try {
             setGenerating(true);
-            const content = `Based on the following conversation history, generate a detailed daily work report for user ${userAddress}:
+            const content = `Based on the following conversation history, generate a detailed daily work report for user ${userAddress} with no other comments:
 
             ${JSON.stringify(conversationMessages, null, 2)}
             
