@@ -5,6 +5,7 @@
   "dependencies": {
     "@0glabs/0g-serving-broker": "^2.0.0",
     "@0glabs/0g-ts-sdk": "^0.2.7",
+    "@ant-design/icons": "^6.0.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",

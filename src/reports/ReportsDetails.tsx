@@ -9,7 +9,7 @@ import { UserRow } from "../components/interface";
 import dayjs from "dayjs";
 import ReactMarkdown from 'react-markdown'; // 添加Markdown渲染组件
 import {PrivateKeyDataType, ConversationMessages} from "../components/types";
-
+import ContactsAuth from "./ContactsAuth";
 
 
 const { RangePicker } = DatePicker;
@@ -218,7 +218,6 @@ const ReportsDetails: React.FC = () => {
         <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
             <h2>工作日报生成</h2>
             <p>基于您授权的对话记录生成日报</p>
-
             <Space direction="vertical" style={{ marginBottom: 20 }}>
                 <RangePicker
                     showTime={{ format: 'HH:mm' }}
@@ -277,6 +276,7 @@ const ReportsDetails: React.FC = () => {
                 ))}
             </Spin>
             <ReportModal />
+            <ContactsAuth />
         </div>
     );
 };
