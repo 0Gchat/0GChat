@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import { ethers } from "ethers";
 import privateKeyData from "../assets/private_key.json";
+import {PrivateKeyDataType} from "./types";
 
 const Test = () => {
     const [services, setServices] = useState<any[]>([]);
@@ -11,16 +12,23 @@ const Test = () => {
     const brokerRef = useRef<any>(null);
     const providerAddress = '0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3';
     const [settleAmount, setSettleAmount] = useState<string>("0.000000000000000088000000000000006296"); // 默认值
+    const userAddress = localStorage.getItem("walletAddress");
 
 
     const initializeBroker = async () => {
         try {
             setLoading(true);
             setError(null);
+            if (!userAddress) {
+                throw new Error("未找到用户钱包地址");
+            }
 
-            // 使用私钥直接初始化
             const provider = new ethers.JsonRpcProvider("https://evmrpc-testnet.0g.ai");
-            const wallet = new ethers.Wallet(privateKeyData.private_key, provider);
+
+            const keys = privateKeyData as PrivateKeyDataType;
+            const privateKey = keys[userAddress.toLowerCase()];
+
+            const wallet = new ethers.Wallet(privateKey, provider);
             brokerRef.current = await createZGComputeNetworkBroker(wallet);
 
             const serviceList = await brokerRef.current.inference.listService();
@@ -43,7 +51,7 @@ const Test = () => {
             setLoading(true);
             setError(null);
             console.log("start create account");
-            const tx = await brokerRef.current.ledger.addLedger(0.5, 40000000000);
+            const tx = await brokerRef.current.ledger.addLedger(0.1, 40000000000);
             // await tx.wait();
             console.log("账户创建成功", tx );
             await query_balance();
