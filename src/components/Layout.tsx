@@ -33,6 +33,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         >
           # 个人资料
         </div>
+        <div
+          className={`channel-item ${
+            location.pathname === "/reportsdetails" ? "active" : ""
+          }`}
+          onClick={() => navigate("/reportsdetails")}
+        >
+          # 日报
+        </div>
 
         <div className="category">加密功能</div>
         <div
