@@ -46,6 +46,8 @@ const getUserInfo = async (address: string): Promise<{ username: string }> => {
 
 const setupWebSocket = (server: any) => {
     const wss = new WebSocketServer({ server });
+    // 存储客户端与聊天室的映射关系
+    const clients = new Map<WebSocket, string>();
 
     wss.on("connection", async (ws: WebSocket, req) => {
         // 从URL中获取会话参数
@@ -59,6 +61,9 @@ const setupWebSocket = (server: any) => {
         }
         const userAddress = normalizeAddress(raw_userAddress) ?? "";
 
+        // 将客户端与聊天室关联
+        clients.set(ws, conversationId);
+
         console.log(`用户 ${userAddress} 加入对话 ${conversationId}`);
 
         // 验证用户是否有权限加入这个对话
@@ -69,6 +74,7 @@ const setupWebSocket = (server: any) => {
                 if (err || !row) {
                     console.error("验证对话权限失败:", err);
                     ws.close(4003, "无权限加入此对话");
+                    clients.delete(ws); // 移除无效的客户端
                     return;
                 }
 
@@ -83,7 +89,6 @@ const setupWebSocket = (server: any) => {
                 }
 
                 // 监听消息
-
                 ws.on("message", async (message) => {
                     try {
                         const { text, isTranslation, translatedText, userLanguage } = JSON.parse(message.toString());
@@ -114,9 +119,12 @@ const setupWebSocket = (server: any) => {
                                     return;
                                 }
 
-                                // 广播消息（区分发送者和接收者）
+                                // 广播消息（仅发送给同一聊天室的客户端）
                                 wss.clients.forEach(client => {
-                                    if (client.readyState === WebSocket.OPEN) {
+                                    if (
+                                        client.readyState === WebSocket.OPEN &&
+                                        clients.get(client) === conversationId // 检查是否属于同一聊天室
+                                    ) {
                                         const isSender = client === ws; // 判断当前客户端是否是发送者
                                         client.send(JSON.stringify({
                                             type: "message",
@@ -141,6 +149,7 @@ const setupWebSocket = (server: any) => {
                 // 监听连接关闭
                 ws.on("close", () => {
                     console.log(`用户 ${userAddress} 离开对话 ${conversationId}`);
+                    clients.delete(ws); // 移除已关闭的客户端
                 });
             }
         );
