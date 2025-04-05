@@ -5,7 +5,7 @@ import privateKeyData from "../assets/private_key.json";
 import { ethers } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import dayjs from "dayjs";
-
+import {PrivateKeyDataType, Message} from "../components/types";
 
 
 declare global {
@@ -14,28 +14,7 @@ declare global {
     }
 }
 
-interface Message {
-    id: number;
-    conversation_id: number;
-    sender: string;
-    sender_username?: string; // 从JOIN查询获得，非表字段
-    text: string;
-    status?: string; // 数据库有默认值
-    timestamp: string;
-    translations?: string | null; // 对应数据库TEXT字段
-    isTranslation?: boolean; // 仅前端使用的标记
-}
 
-interface ConversationUserRow {
-    user1: string;
-    user2: string;
-    user1_username: string | null;
-    user1_avatar: string | null;
-    user1_language: string | null;
-    user2_username: string | null;
-    user2_avatar: string | null;
-    user2_language: string | null;
-}
 
 const fetchUserLanguage = async (address: string, conversationId:string): Promise<string> => {
     const response = await fetch(`http://localhost:5001/contact/user-info?address=${address}&conversationId=${conversationId}`);
@@ -107,9 +86,19 @@ const ChatPage = () => {
     // 初始化 0G Broker
     const initializeBroker = async () => {
         try {
+
+            if (!userAddress) {
+                throw new Error("未找到用户钱包地址");
+            }
+
             setIsInitializing(true);
             const provider = new ethers.JsonRpcProvider("https://evmrpc-testnet.0g.ai");
-            const wallet = new ethers.Wallet(privateKeyData.private_key, provider);
+
+            const keys = privateKeyData as PrivateKeyDataType;
+            const privateKey = keys[userAddress.toLowerCase()];
+
+            const wallet = new ethers.Wallet(privateKey, provider);
+
             const brokerInstance = await createZGComputeNetworkBroker(wallet);
             setBroker(brokerInstance);
             console.log("0G Broker 初始化成功");
@@ -201,7 +190,8 @@ const ChatPage = () => {
             margin: '0 auto',
             display: 'flex',
             flexDirection: 'column',
-            height: '90vh'
+            height: '90vh',
+            color: '#333'
         }}>
             <h2 style={{ marginBottom: '20px' }}>聊天室 - 对话 {conversationId}</h2>
 
@@ -219,10 +209,15 @@ const ChatPage = () => {
                     // 判断当前用户是否是发送者（优先用 original_text）
                     const isSender = msg.sender === userAddress;
                     const translations = msg.translations ? JSON.parse(msg.translations) : null;
+                    console.log("当前用户的语言: ", userLanguage);
+                    console.log("当前用户: ", userAddress, isSender);
 
                     const displayText = isSender
                         ? translations?.Original || msg.text
                         : translations?.[userLanguage] || msg.text;
+
+                    console.log("msg.text", msg.text)
+                    console.log("displayText", displayText)
 
                     const isTranslated = !isSender && !!translations?.[userLanguage];
 

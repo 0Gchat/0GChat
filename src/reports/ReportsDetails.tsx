@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, List, Card, Spin, message, DatePicker, Space } from "antd";
+import { Button, List, Card, Spin, message, DatePicker, Space, Modal } from "antd"; // 添加了Modal
 import { ethers } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 import withWalletCheck from "../components/withWalletCheck";
 import privateKeyData from "../assets/private_key.json";
 import { UserRow } from "../components/interface";
 import dayjs from "dayjs";
+import ReactMarkdown from 'react-markdown'; // 添加Markdown渲染组件
+import {PrivateKeyDataType, ConversationMessages} from "../components/types";
+
+
 
 const { RangePicker } = DatePicker;
 
-interface Message {
-    [key: string]: string;
-    timestep: string;
-}
-
-interface ConversationMessages {
-    [conversationId: string]: Message[];
-}
 
 const ReportsDetails: React.FC = () => {
     const navigate = useNavigate();
@@ -30,6 +26,8 @@ const ReportsDetails: React.FC = () => {
         dayjs().subtract(7, 'day'), // 默认选择最近一周
         dayjs()
     ]);
+    const [reportVisible, setReportVisible] = useState(false); // 控制弹窗显示
+    const [reportContent, setReportContent] = useState(""); // 存储报告内容
     const userAddress = localStorage.getItem("walletAddress");
 
     // 禁用今天之后的日期
@@ -64,8 +62,14 @@ const ReportsDetails: React.FC = () => {
 
     const initBroker = async () => {
         try {
+            if (!userAddress) {
+                throw new Error("未找到用户钱包地址");
+            }
+            const keys = privateKeyData as PrivateKeyDataType;
+            const privateKey = keys[userAddress.toLowerCase()];
+
             const provider = new ethers.JsonRpcProvider("https://evmrpc-testnet.0g.ai");
-            const wallet = new ethers.Wallet(privateKeyData.private_key, provider);
+            const wallet = new ethers.Wallet(privateKey, provider);
             const brokerInstance = await createZGComputeNetworkBroker(wallet);
             console.log("正在初始化 0g broker...");
             setBroker(brokerInstance);
@@ -128,7 +132,7 @@ const ReportsDetails: React.FC = () => {
     };
 
     const generateDailyReport = async () => {
-        if (!broker || !userAddress || !userInfo) { // 添加 userInfo 检查
+        if (!broker || !userAddress || !userInfo) {
             message.warning("请先初始化服务");
             return;
         }
@@ -147,9 +151,6 @@ const ReportsDetails: React.FC = () => {
             3. Identify the deliverable owner for each task  
             4. Output in ${userInfo.language}`;
 
-            console.log(content);
-            console.log(JSON.stringify(conversationMessages, null, 2))
-
             const providerAddress = "0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3";
             const { endpoint, model } = await broker.inference.getServiceMetadata(providerAddress);
             const headers = await broker.inference.getRequestHeaders(providerAddress, content);
@@ -162,20 +163,19 @@ const ReportsDetails: React.FC = () => {
                     model
                 }),
             });
-            console.log(apiResponse)
 
             const result = await apiResponse.json();
             const reportText = result.choices?.[0]?.message?.content || "";
             const chatID = result.id;
 
-
             console.log("生成结果:", reportText);
             message.success("日报生成成功");
-            console.log("生成的日报:", result.translatedText || result.text);
-            await broker.inference.processResponse(providerAddress, reportText, chatID);
 
-            // 这里可以添加将结果显示到UI的逻辑
-            // 例如设置状态: setReportResult(result.translatedText || result.text);
+            // 设置报告内容并显示弹窗
+            setReportContent(reportText);
+            setReportVisible(true);
+
+            await broker.inference.processResponse(providerAddress, reportText, chatID);
 
         } catch (error) {
             console.error("生成日报失败:", error);
@@ -184,6 +184,33 @@ const ReportsDetails: React.FC = () => {
             setGenerating(false);
         }
     };
+
+    const ReportModal = () => (
+        <Modal
+            title="工作日报"
+            visible={reportVisible}
+            onCancel={() => setReportVisible(false)}
+            footer={null}
+            width="80%"
+            style={{ top: 20 }}
+        >
+            <div style={{
+                maxHeight: "70vh",
+                overflow: "auto",
+                padding: "0 10px",
+                border: "1px solid #f0f0f0",
+                borderRadius: "4px"
+            }}>
+                <ReactMarkdown>{reportContent}</ReactMarkdown>
+            </div>
+            <div style={{ marginTop: "20px", textAlign: "right" }}>
+                <Button type="primary" onClick={() => setReportVisible(false)}>
+                    关闭
+                </Button>
+            </div>
+        </Modal>
+    );
+
 
     if (!userAddress) return null;
 
@@ -249,6 +276,7 @@ const ReportsDetails: React.FC = () => {
                     </Card>
                 ))}
             </Spin>
+            <ReportModal />
         </div>
     );
 };
