@@ -1,0 +1,19 @@
+/* 使用CSS Module中的全局作用域选择器 */
+.chatListContainer :global(.ant-list-item-meta) {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.chatListContainer
+  :global(
+    .ant-list .ant-list-item .ant-list-item-meta .ant-list-item-meta-title
+  ) {
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: 27px !important;
+}
+.chatListContainer :global(.ant-list .ant-list-item .ant-list-item-meta .ant-list-item-meta-title) {
+  color: #fff !important;
+  font-size: 27px !important;
+}
+/* :where(.css-dev-only-do-not-override-1d4w9r2).ant-list .ant-list-item .ant-list-item-meta .ant-list-item-meta-title */
