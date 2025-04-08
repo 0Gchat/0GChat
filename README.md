@@ -94,11 +94,3 @@ We welcome contributions! Please fork the repository and create a pull request w
 Have questions or want to get involved?
 - Telegram: [@EugeneWill](https://t.me/EugeneWill)
 - Twitter: [@_CryptoSift](https://twitter.com/_CryptoSift)
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-*Replace logo path and customize links as needed for your actual project*
