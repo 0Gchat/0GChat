@@ -85,9 +85,6 @@ We're working on implementing our Internal Intelligence System:
 4. Fine-tune lightweight models using 0G's infrastructure
 5. Deploy hybrid AI system (70% fine-tuned model, 30% RAG)
 
-## Contributing
-
-We welcome contributions! Please fork the repository and create a pull request with your changes.
 
 ## Support & Contact
 
