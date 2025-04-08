@@ -1,46 +1,104 @@
-# Getting Started with Create React App
+# 0GChat - Decentralized Workplace Communication Platform
+
+![0GChat Logo](./0gchat-frontend/src/assets/logo.png)
+
+## Introduction
+
+0GChat is a revolutionary decentralized communication and productivity platform built on the 0G blockchain. Designed for modern workplace collaboration, it combines secure messaging, automatic translation, and AI-powered productivity tools in a blockchain-native environment.
+
+## Getting Started
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+### Prerequisites
+- Node.js (v14 or later)
+- npm or yarn
+- Web3 wallet (MetaMask, WalletConnect, etc.)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/0gchat.git
+   cd 0gchat
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables:
+   Create a `.env` file based on `.env.example` and add your configuration.
 
 ## Available Scripts
 
 In the project directory, you can run:
 
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Runs the app in development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
 ### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in interactive watch mode.
 
 ### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Builds the app for production to the `build` folder.
 
 ### `npm run eject`
+**Note: this is a one-way operation.** Ejects from Create React App configuration.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Key Features
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 🚀 Wallet-Based Authentication
+- Passwordless login using Web3 wallets
+- Simple onboarding with username and language selection
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### 🌍 Decentralized Messaging with Auto-Translation
+- Add contacts by wallet address
+- Real-time message translation between languages
+- End-to-end encrypted communications
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### 🤖 AI-Powered Productivity
+- Automated work report generation from chat history
+- Task tracking and priority management
+- Smart reminders and follow-up suggestions
 
-## Learn More
+### ⛓ Blockchain Native
+- Built on 0G's decentralized storage and computation
+- Transparent billing with $A0GI token payments
+- All transactions recorded on-chain
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Technical Architecture
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Frontend**: React.js with Web3 integration
+- **Blockchain**: 0G network for decentralized operations
+- **AI Services**: Hybrid model combining fine-tuned internal knowledge with RAG
+- **Storage**: Decentralized storage for messages and user data
+
+## Future Roadmap
+
+We're working on implementing our Internal Intelligence System:
+1. Gather HR documents and department responsibilities
+2. Collect historical task records from internal platforms
+3. Incorporate employee capability data
+4. Fine-tune lightweight models using 0G's infrastructure
+5. Deploy hybrid AI system (70% fine-tuned model, 30% RAG)
+
+## Contributing
+
+We welcome contributions! Please fork the repository and create a pull request with your changes.
+
+## Support & Contact
+
+Have questions or want to get involved?
+- Telegram: [@EugeneWill](https://t.me/EugeneWill)
+- Twitter: [@_CryptoSift](https://twitter.com/_CryptoSift)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+*Replace logo path and customize links as needed for your actual project*
