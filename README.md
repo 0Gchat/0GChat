@@ -6,6 +6,10 @@
 
 0GChat is a revolutionary decentralized communication and productivity platform built on the 0G blockchain. Designed for modern workplace collaboration, it combines secure messaging, automatic translation, and AI-powered productivity tools in a blockchain-native environment.
 
+## Demo Link
+
+[0GChat Demo](https://drive.google.com/file/d/1fM9zIxgbpZHSf4b_awqmNtX1gdnBQQSa/view?usp=sharing)
+
 ## Getting Started
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
