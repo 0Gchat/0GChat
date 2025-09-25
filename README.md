@@ -93,5 +93,4 @@ We're working on implementing our Internal Intelligence System:
 ## Support & Contact
 
 Have questions or want to get involved?
-- Telegram: [@EugeneWill](https://t.me/EugeneWill)
 - Twitter: [@_CryptoSift](https://twitter.com/_CryptoSift)
